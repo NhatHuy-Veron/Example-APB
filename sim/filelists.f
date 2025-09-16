@@ -13,3 +13,6 @@
 
 # Package file
 ../env/apb_pkg.sv
+
+# Testbench file
+../env/testbench.sv
