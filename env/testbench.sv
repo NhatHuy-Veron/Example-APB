@@ -1,19 +1,9 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+import apb_pkg::*;
 
 // Timescale directive
 `timescale 1ns/1ps
-
-// Include all TB components
-`include "apb_interface.sv"
-`include "apb_transaction.sv"
-`include "apb_sequence.sv"
-`include "apb_sequencer.sv"
-`include "apb_driver.sv"
-`include "apb_monitor.sv"
-`include "apb_agent.sv"
-`include "apb_environment.sv"
-`include "apb_test.sv"
 
 module testbench;
 

@@ -1,51 +1,91 @@
-# Makefile for APB UVM VIP Exercise
-# Supports QuestaSim/ModelSim
+##########################################################
+##        Makefile for UVM Simulation and Coverage      ##
+##        Author: Adapted from Example-Veron            ##
+##########################################################
 
-# Variables
-TESTNAME ?= apb_test
-RTL_DIR = ../rtl
-TB_DIR = ../tb
-WORK_LIB = work
+# ---------------------
+# Configurable Variables
+# ---------------------
+TESTNAME    ?= apb_test
+TOP         ?= testbench
+RADIX       = hex
+EXCLUDE_TCL = exclude_coverage.tcl
 
-# Source files
-RTL_FILES = $(RTL_DIR)/apb_slave.sv
-TB_FILES = $(TB_DIR)/apb_interface.sv \
-           $(TB_DIR)/apb_transaction.sv \
-           $(TB_DIR)/apb_sequence.sv \
-           $(TB_DIR)/apb_sequencer.sv \
-           $(TB_DIR)/apb_driver.sv \
-           $(TB_DIR)/apb_monitor.sv \
-           $(TB_DIR)/apb_agent.sv \
-           $(TB_DIR)/apb_environment.sv \
-           $(TB_DIR)/apb_test.sv \
-           $(TB_DIR)/testbench.sv
+# ---------------------
+# Directories
+# ---------------------
+LOG_DIR     = log
+WAVE_DIR    = waveform
+DB_DIR      = db
+COV_DIR     = coverage
 
-# Compilation options
-VLOG_OPTS = -sv +incdir+$(TB_DIR) +define+UVM_NO_DPI
-VSIM_OPTS = -c -voptargs="+acc" -L uvm
+# ---------------------
+# Default Target
+# ---------------------
+all: clean build
 
-# Default target
-all: compile simulate
+# ---------------------
+# Compile Design and Testbench
+# ---------------------
+build:
+	@echo "[BUILD] Compiling design and testbench..."
+	vlib work
+	vmap work work
+	vlog -sv +cover=bcesft +acc -f filelists.f | tee compile.log
 
-# Create work library
-$(WORK_LIB):
-	vlib $(WORK_LIB)
+# ---------------------
+# Run UVM Simulation without coverage
+# ---------------------
+run:
+	@echo "[SIM] Running UVM test: $(TESTNAME)"
+	mkdir -p $(LOG_DIR) $(WAVE_DIR)
+	vsim -c -voptargs="+acc" -assertdebug -l $(LOG_DIR)/$(TESTNAME).log $(TOP) \
+	     -wlf $(WAVE_DIR)/$(TESTNAME).wlf \
+	     -do "log -r /*; run -all; quit" \
+	     +UVM_TESTNAME=$(TESTNAME)
 
-# Compile RTL and TB files
-compile: $(WORK_LIB)
-	vlog $(VLOG_OPTS) $(RTL_FILES) $(TB_FILES)
+# ---------------------
+# Run UVM Simulation with Coverage
+# ---------------------
+run_cov:
+	@echo "[SIM+COV] Running UVM test with coverage: $(TESTNAME)"
+	mkdir -p $(LOG_DIR) $(WAVE_DIR) $(DB_DIR)
+	vsim -coverage -c -voptargs="+cover=bcesft" -assertdebug -l $(LOG_DIR)/$(TESTNAME).log $(TOP) \
+	     -wlf $(WAVE_DIR)/$(TESTNAME).wlf \
+	     -do "if {[file exists $(EXCLUDE_TCL)]} {do $(EXCLUDE_TCL)}; coverage save -onexit ./$(DB_DIR)/$(TESTNAME).ucdb; log -r /*; run -all; quit" \
+	     +UVM_TESTNAME=$(TESTNAME)
 
-# Simulate
-simulate: compile
-	vsim $(VSIM_OPTS) -do "run -all; quit" $(TESTNAME)
+# ---------------------
+# Generate Merged Coverage Reports
+# ---------------------
+gen_cov:
+	@echo "[COV] Generating merged coverage reports..."
+	mkdir -p $(COV_DIR)
+	vcover merge $(DB_DIR)/merged.ucdb $(DB_DIR)/*.ucdb
+	vcover report $(DB_DIR)/merged.ucdb -output $(COV_DIR)/summary_report.txt
+	vcover report -details -code bcesft -annotate -all -codeAll \
+	              $(DB_DIR)/merged.ucdb -output $(COV_DIR)/detail_report.txt
 
-# Run with GUI
-gui: compile
-	vsim $(VSIM_OPTS) -do "add wave -r /*; run -all" $(TESTNAME)
+# ---------------------
+# Open Waveform Viewer
+# ---------------------
+wave:
+	@if [ ! -f $(WAVE_DIR)/$(TESTNAME).wlf ]; then \
+		echo "[WAVE] Waveform not found. Run 'make run TESTNAME=$(TESTNAME)' first."; \
+	else \
+		echo "[WAVE] Opening waveform viewer for test: $(TESTNAME)"; \
+		vsim -i -view $(WAVE_DIR)/$(TESTNAME).wlf \
+		     -do "if {[string match /* $(TOP)]} {add wave -r /$(TOP)/dut/*;} else {add wave -r /$(TOP);}; radix -$(RADIX)" & \
+	fi
 
-# Clean
+# ---------------------
+# Clean all generated files
+# ---------------------
 clean:
-	vdel -lib $(WORK_LIB) -all
-	rm -rf $(WORK_LIB)
+	@echo "[CLEAN] Cleaning all generated files..."
+	rm -rf *.ini work transcript *.dbg *.wlf \
+	       $(LOG_DIR) $(WAVE_DIR) $(DB_DIR) $(COV_DIR)
+
+.PHONY: all build run run_cov gen_cov wave clean
 
 .PHONY: all compile simulate gui clean
