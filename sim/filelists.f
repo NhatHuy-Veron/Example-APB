@@ -3,6 +3,7 @@
 +incdir+../env
 +incdir+../tests
 +incdir+../model/Environment
++incdir+../seq
 
 # RTL files
 ../rtl/apb_slave.sv
@@ -12,6 +13,3 @@
 
 # Package file
 ../env/apb_pkg.sv
-
-# Test files
-../tests/apb_test.sv

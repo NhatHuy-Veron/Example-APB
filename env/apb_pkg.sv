@@ -11,5 +11,6 @@ import uvm_pkg::*;
 `include "apb_monitor.sv"
 `include "apb_agent.sv"
 `include "apb_environment.sv"
+`include "apb_test.sv"
 
 endpackage
