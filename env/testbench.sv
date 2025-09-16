@@ -35,7 +35,19 @@ module testbench;
     // Reset generation (active low for first 25ns)
     initial begin
         PRESETn = 0;
+        apb_if.PRESETn = PRESETn;  // Assign to interface
         #25ns PRESETn = 1;
+        apb_if.PRESETn = PRESETn;
+    end
+
+    // Initialize APB signals to avoid 'x' values
+    initial begin
+        apb_if.PSEL = 0;
+        apb_if.PENABLE = 0;
+        apb_if.PWRITE = 0;
+        apb_if.PADDR = 0;
+        apb_if.PWDATA = 0;
+        apb_if.PRDATA = 0;
     end
 
     // Waveform dump for debugging
