@@ -47,7 +47,6 @@ module testbench;
         apb_if.PWRITE = 0;
         apb_if.PADDR = 0;
         apb_if.PWDATA = 0;
-        apb_if.PRDATA = 0;
     end
 
     // Waveform dump for debugging
