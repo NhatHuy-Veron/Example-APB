@@ -13,8 +13,5 @@
 # Package file
 ../env/apb_pkg.sv
 
-# Sequence files
-../seq/apb_sequence.sv
-
 # Test files
 ../tests/apb_test.sv

@@ -5,6 +5,7 @@ import uvm_pkg::*;
 
 // Include all TB components
 `include "apb_transaction.sv"
+`include "apb_sequence.sv"
 `include "apb_sequencer.sv"
 `include "apb_driver.sv"
 `include "apb_monitor.sv"
