@@ -7,6 +7,9 @@
 # RTL files
 ../rtl/apb_slave.sv
 
+# Interface file
+../env/apb_interface.sv
+
 # Package file
 ../env/apb_pkg.sv
 
